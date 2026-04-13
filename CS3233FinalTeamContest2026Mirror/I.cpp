@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+using  ll = long long;
+using ld = long double;
+//DSU
+vector<ll> parent;
+vector<ll> sz;
+ll find(ll ind){
+	if(parent[ind] == ind){
+		return ind;
+	}else{
+		parent[ind] = find(parent[ind]);
+		return find(parent[ind]);
+	}
+}
+bool merge(ll a, ll b){
+	ll rootA = find(a), rootB = find(b);
+	if(rootA == rootB){
+		return false;
+	}
+	if(sz[rootA] > sz[rootB]){
+		sz[rootA] += sz[rootB];
+		parent[rootB] = rootA;
+	}else{
+		sz[rootB] += sz[rootA];
+		parent[rootA] = rootB;
+	}
+	return true;
+}
+//FACTORS
+vector<ll> factors(ll n){
+	vector<ll> ans;
+	for(ll i = 1; i < sqrt(n); ++i){ //O(sqrt(n))
+		if(n % i == 0){
+			ans.push_back(i);
+			ans.push_back(n / i);
+		}
+	}
+	if((ll)sqrt(n) * (ll)sqrt(n) == n){
+		ans.push_back(sqrt(n));
+	}
+	return ans;
+}
+map<ll, ll> primeFactorize(ll n){
+	map<ll, ll> ans;
+	while(n % 2 == 0){
+		++ans[2];
+		n /= 2;
+	}
+	for(ll i = 3; i * i <= n; i += 2){
+		while(n % i == 0){
+			++ans[i];
+			n /= i;
+		}
+	}
+	if(n == 1) return ans;
+	++ans[n];
+	return ans;
+}
+//GRAPH
+struct Node{
+	ll index = 0;
+	ll dist = 1'000'000'000'000'000'000LL;
+	vector<pair<Node*, ll>> connections;
+	bool finalised = false;
+};
+void connect(Node* a, Node* b, ll cost){
+	a -> connections.push_back({b, cost});
+}
+void bidirConnect(Node* a, Node* b, ll cost){
+	a -> connections.push_back({b, cost});
+	b -> connections.push_back({a, cost});
+}
+struct Compare{
+	bool operator()(const Node* n1, const Node* n2){
+		return n1 -> dist > n2 -> dist;
+	}
+};
+void dijkstra(Node* start){
+	priority_queue<Node*, vector<Node*>, Compare> pq;
+	start -> dist = 0;
+	pq.push(start);
+	while(!pq.empty()){
+		Node* cur = pq.top();
+		pq.pop();
+		if(cur -> finalised){
+			continue;
+		}else{
+			cur -> finalised = true;
+			for(pair<Node*, ll> &edge : cur -> connections){
+				Node* next = edge.first;
+				if(!next -> finalised && cur -> dist + edge.second < next -> dist){
+					next -> dist = cur -> dist + edge.second;
+					pq.push(next);
+				}
+			}
+		}
+	}
+}
+//END
+
+void tc(){
+	ll n, len;
+	cin >> n >> len;
+	vector<ll> a(n), b(n);
+	for(ll i = 0; i < n; ++i){
+		cin >> a[i];
+	}
+	for(ll i = 0; i < n; ++i){
+		cin >> b[i];
+	}
+	ll l = 0;
+	ll r = len - 1;
+	ll num = 0;
+	ll den = 0;
+	for(ll i = 0;  i <= r; ++i){
+		num += a[i];
+		den += b[i];
+	}
+	long double ans = (ld)num / den;
+	while(true){
+		if(r == n - 1){
+			++l;
+			den -= b[l - 1];
+			num -= a[l - 1];
+			if(r - l < len - 1) break;
+			ans = max(ans, (ld)num / den);
+		}else if(l == r - len + 1){
+			++r;
+			num += a[r];
+			den += b[r];
+			ans = max(ans, (ld)num / den);
+		}else{
+			++r;
+			num += a[r];
+			den += b[r];
+			ans = max(ans, (ld)num / den);
+		}
+	}
+	cout << fixed << setprecision(10) << ans << endl;
+}
+
+int main(){
+	ll t = 1;
+	//cin >> t;
+	while(t--){
+		tc();
+	}
+}
